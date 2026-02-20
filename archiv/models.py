@@ -1,13 +1,10 @@
 import numpy as np
 from django.db import models
 from langchain_core.documents import Document
-from langchain_openai import OpenAIEmbeddings
+from openai import OpenAI
 from pgvector.django import CosineDistance, HnswIndex, VectorField
 
-try:
-    embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
-except Exception as e:
-    print(f"you might want to set OPENAI_API_KEY as env variable due to: {e}")
+client = OpenAI(base_url="http://localhost:1234/v1", api_key="lm-studio")
 
 
 class DateStampedModel(models.Model):
@@ -48,6 +45,12 @@ class TextSnippet(DateStampedModel):
         blank=True,
         null=True,
     )
+    embedding_nomic = VectorField(
+        dimensions=768,
+        verbose_name="Embedding (nomic-embed-text-v1.5)",
+        blank=True,
+        null=True,
+    )
 
     class Meta:
         ordering = ["-updated_at"]
@@ -61,7 +64,14 @@ class TextSnippet(DateStampedModel):
                 m=16,
                 ef_construction=64,
                 opclasses=["vector_l2_ops"],
-            )
+            ),
+            HnswIndex(
+                name="textsnippetindex_nomic",
+                fields=["embedding_nomic"],
+                m=16,
+                ef_construction=64,
+                opclasses=["vector_l2_ops"],
+            ),
         ]
 
     def __str__(self):
@@ -72,9 +82,15 @@ class TextSnippet(DateStampedModel):
         return f"{vector}: {self.content[:25]}... ({self.collection}))"
 
     def embedd_content(self):
-        if self.content and not isinstance(self.embedding, np.ndarray):
-            embedding = embeddings.embed_documents([self.content])
-            self.embedding = embedding[0]
+        if self.content and not isinstance(self.embedding_nomic, np.ndarray):
+            created_embedding = (
+                client.embeddings.create(
+                    input=[self.content], model="text-embedding-nomic-embed-text-v1.5"
+                )
+                .data[0]
+                .embedding
+            )
+            self.embedding_nomic = created_embedding
             self.save()
 
     def find_similar(self, collection_title: str = "__all__", amount: str = 3):
@@ -83,9 +99,9 @@ class TextSnippet(DateStampedModel):
         else:
             col = Collection.objects.filter(title__icontains=collection_title)
             qs = TextSnippet.objects.filter(collection__in=col)
-        qs = qs.annotate(distance=CosineDistance("embedding", self.embedding)).order_by(
-            "distance"
-        )[:amount]
+        qs = qs.annotate(
+            distance=CosineDistance("embedding_nomic", self.embedding_nomic)
+        ).order_by("distance")[:amount]
         return qs
 
     def as_langchain_doc(self) -> Document:

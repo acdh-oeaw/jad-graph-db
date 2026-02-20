@@ -15,3 +15,5 @@ wheels/
 django_graph_db_dump.sql
 db_dump.zip
 lm-studio-chat.md
+OLLAMA_SETUP.md
+archiv/ollama_client.py

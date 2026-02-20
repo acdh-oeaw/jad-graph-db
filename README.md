@@ -44,10 +44,16 @@ uv run manage.py import_jad_full_texts
 
 ### import JAD (sentences) Passages:
 ```shell
-uv uv run manage.py import_jad_sentences
+uv run manage.py import_jad_sentences
 ```
 
 > done in 1:44:50 (~700K input tokens)
+
+### update_jad_sentences
+```shell
+uv run manage.py update_jad_sentences
+```
+used nomic-embed-text-v1.5 via lmstudio took 0:13:39
 
 
 ### import Vulgata (32.921 verses)
