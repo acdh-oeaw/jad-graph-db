@@ -11,8 +11,8 @@ echo "Waiting for Ollama to be ready..."
 sleep 5
 
 # Pull the nomic-embed-text model from Hugging Face
-echo "Pulling nomic-embed-text-v1.5 model..."
-ollama pull nomic-embed-text
+# echo "Pulling nomic-embed-text-v1.5 model..."
+# ollama pull nomic-embed-text
 
 uv run manage.py collectstatic --no-input
 echo "running migrations"
