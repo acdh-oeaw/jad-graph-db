@@ -1,16 +1,20 @@
-from django.http import JsonResponse
+from django.http import Http404, JsonResponse
 
-from archiv.models import TextSnippet
+from archiv.models import Collection, TextSnippet
 
 
 def find_similar_passages(request):
     """Return JSON with foo: bar"""
+    vector_field = request.GET.get("vector-field", "embedding_nomic")
+    if vector_field not in TextSnippet.get_vector_field_names():
+        raise Http404(f"Invalid vector field: {vector_field}")
     jad_id = request.GET.get("jad-id")
     amount = request.GET.get("amount", 3)
     max_distance = request.GET.get("max-distance", 0.02)
-    collection_title = request.GET.get("collection-title", "JAD sentences")
-    if collection_title not in ["JAD sentences", "Vulgata"]:
-        collection_title = "JAD sentences"
+    collection_title = request.GET.get("collection", "JAD sentences")
+    print(collection_title)
+    if collection_title not in list(Collection.objects.values_list("title", flat=True)):
+        raise Http404(f"Collection with title {collection_title} does not exist")
     try:
         max_distance = float(max_distance)
     except ValueError:
@@ -39,7 +43,9 @@ def find_similar_passages(request):
             for x in items:
                 item = {"id": x.text_id, "text": x.content, "similar": []}
                 for y in x.find_similar(
-                    collection_title=collection_title, amount=amount
+                    vector_field=vector_field,
+                    collection_title=collection_title,
+                    amount=amount,
                 ):
                     if y.distance < max_distance and y.text_id != x.text_id:
                         item["similar"].append(
