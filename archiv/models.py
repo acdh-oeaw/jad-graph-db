@@ -1,10 +1,6 @@
 import numpy as np
 from django.db import models
-from langchain_core.documents import Document
-from openai import OpenAI
 from pgvector.django import CosineDistance, HnswIndex, VectorField
-
-client = OpenAI(base_url="http://localhost:1234/v1", api_key="lm-studio")
 
 
 class DateStampedModel(models.Model):
@@ -81,33 +77,28 @@ class TextSnippet(DateStampedModel):
             vector = "✗"
         return f"{vector}: {self.content[:25]}... ({self.collection}))"
 
-    def embedd_content(self):
-        if self.content and not isinstance(self.embedding_nomic, np.ndarray):
-            created_embedding = (
-                client.embeddings.create(
-                    input=[self.content], model="text-embedding-nomic-embed-text-v1.5"
-                )
-                .data[0]
-                .embedding
-            )
-            self.embedding_nomic = created_embedding
-            self.save()
+    @classmethod
+    def get_vector_field_names(cls):
+        """Return a list of all field names that are VectorFields."""
+        return [
+            field.name
+            for field in cls._meta.get_fields()
+            if isinstance(field, VectorField)
+        ]
 
-    def find_similar(self, collection_title: str = "__all__", amount: str = 3):
+    def find_similar(
+        self,
+        vector_field: str = "embedding_nomic",
+        collection_title: str = "__all__",
+        amount: str = 3,
+    ):
         if collection_title == "__all__":
             qs = TextSnippet.objects.all()
         else:
-            col = Collection.objects.filter(title__icontains=collection_title)
+            col = Collection.objects.filter(title=collection_title)
             qs = TextSnippet.objects.filter(collection__in=col)
+        qs = qs.exclude(**{f"{vector_field}__isnull": True})
         qs = qs.annotate(
-            distance=CosineDistance("embedding_nomic", self.embedding_nomic)
+            distance=CosineDistance(vector_field, getattr(self, vector_field))
         ).order_by("distance")[:amount]
         return qs
-
-    def as_langchain_doc(self) -> Document:
-        doc = Document(
-            page_content=self.content,
-            metadata={"source": self.collection.title, "id": self.text_id},
-            id=self.text_id,
-        )
-        return doc

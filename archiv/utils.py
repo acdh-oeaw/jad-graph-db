@@ -1,5 +1,9 @@
 import re
 
+from openai import OpenAI
+
+from archiv.models import TextSnippet
+
 regex_patterns = [
     r"\([^)]*\)",  # remove everything between () including the parentheses
     r"\{[^}]*\}",  # remove everything between {} including the braces
@@ -68,3 +72,22 @@ def sentence_splitter(text, splitter_pattern=splitter_pattern):
         else:
             merged.append(s)
     return [clean_text(s.strip()) for s in merged if s.strip()]
+
+
+def vectorize(
+    client: OpenAI,
+    model_object: TextSnippet,
+    vector_field: str = "embedding_nomic",
+    embedding_model_name: str = "nomic-embed-text",
+):
+    if model_object.content:
+        vector = (
+            client.embeddings.create(
+                input=[model_object.content],
+                model=embedding_model_name,
+            )
+            .data[0]
+            .embedding
+        )
+        setattr(model_object, vector_field, vector)
+        model_object.save()
