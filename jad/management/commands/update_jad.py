@@ -3,7 +3,7 @@ from datetime import timedelta
 
 import requests
 from django.core.management.base import BaseCommand
-from openai import BadRequestError, OpenAI
+from openai import BadRequestError, InternalServerError, OpenAI
 from tqdm import tqdm
 
 from archiv.models import Collection, TextSnippet
@@ -14,7 +14,9 @@ class Command(BaseCommand):
     help = "import JAD full texts"
 
     def handle(self, *args, **options):
-        client = OpenAI(base_url="http://localhost:11434/v1", api_key="ollama")
+        # client = OpenAI(base_url="http://localhost:11434/v1", api_key="ollama")
+        # client = OpenAI(base_url="http://localhost:1234/v1", api_key="lm-studio")
+        client = OpenAI(base_url="http://127.0.0.1:8080/v1", api_key="llama-ccp")
         start_time = time.time()
         col, _ = Collection.objects.get_or_create(title="JAD sentences")
         url = "https://raw.githubusercontent.com/jerusalem-70-ad/jad-baserow-dump/refs/heads/main/json_dumps/occurrences.json"  # noqa
@@ -36,8 +38,8 @@ class Command(BaseCommand):
                 snippet.content = x
                 snippet.save()
                 try:
-                    vectorize(client, snippet, update=False)
-                except BadRequestError as e:
+                    vectorize(client, snippet, update=True)
+                except (BadRequestError, InternalServerError) as e:
                     print(f"failed to process {text_id}, with text {len(x)} due to {e}")
         duration = time.time() - start_time
         print(f"done in {timedelta(seconds=int(duration))}")
