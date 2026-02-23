@@ -52,6 +52,8 @@ INSTALLED_APPS = [
     "django_extensions",
     "crispy_forms",
     "crispy_bootstrap5",
+    "rest_framework",
+    "drf_spectacular",
     "django_spaghetti",
     "archiv",
     "webpage",
@@ -159,3 +161,11 @@ SPAGHETTI_SAUCE = {
 
 ACDH_IMPRINT_URL = "https://imprint.acdh.oeaw.ac.at/"
 REDMINE_ID = os.environ.get("REDMINE_ID", 27526)
+
+
+REST_FRAMEWORK = {
+    "DEFAULT_PERMISSION_CLASSES": (
+        "rest_framework.permissions.IsAuthenticatedOrReadOnly",
+    ),
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+}
