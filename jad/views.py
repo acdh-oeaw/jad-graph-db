@@ -4,6 +4,57 @@ from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework.decorators import api_view
 
 from archiv.models import Collection, TextSnippet
+from jad.models import JadRelation
+
+
+@extend_schema(
+    responses={
+        200: {
+            "type": "object",
+            "properties": {
+                "nodes": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "id": {"type": "string"},
+                            "label": {"type": "string"},
+                        },
+                    },
+                },
+                "edges": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "source": {"type": "string"},
+                            "target": {"type": "string"},
+                        },
+                    },
+                },
+            },
+            "example": {
+                "nodes": [
+                    {"id": "jad_occurrence__1", "label": "jad_occurrence__1"},
+                    {"id": "jad_occurrence__2", "label": "jad_occurrence__2"},
+                ],
+                "edges": [
+                    {"source": "jad_occurrence__1", "target": "jad_occurrence__2"}
+                ],
+            },
+        }
+    }
+)
+@api_view(["get"])
+def network(request):
+    items = JadRelation.objects.values_list("source_id", "target_id", "distance")
+    nodes = set(JadRelation.objects.values_list("source_id", flat=True))
+    nodes_2 = set(JadRelation.objects.values_list("target_id", flat=True))
+    data = {
+        "nodes": [{"id": x, "label": x} for x in nodes.union(nodes_2)],
+        "edges": [{"source": x[0], "target": x[1]} for x in items if x[0] != x[1]],
+    }
+    return JsonResponse(data)
 
 
 @extend_schema(
