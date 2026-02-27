@@ -25,11 +25,16 @@ class Command(BaseCommand):
                 collection_title=collection_title,
                 amount=amount,
             ):
-                if y.distance < max_distance and y.text_id != x.text_id:
-                    target_id = y.text_id.split("-")[0]
-                    JadRelation.objects.get_or_create(
-                        source_id=source_id, target_id=target_id, distance=max_distance
-                    )
+                try:
+                    if y.distance < max_distance and y.text_id != x.text_id:
+                        target_id = y.text_id.split("-")[0]
+                        JadRelation.objects.get_or_create(
+                            source_id=source_id,
+                            target_id=target_id,
+                            distance=max_distance,
+                        )
+                except Exception as e:
+                    print(f"failed to process {x.text_id} due to {e}")
 
         duration = time.time() - start_time
         print(f"done in {timedelta(seconds=int(duration))}")
