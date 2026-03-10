@@ -164,8 +164,8 @@ def find_similar_passages(request):
         amount = int(amount)
     except ValueError:
         amount = 3
-    if amount > 10:
-        amount = 10
+    if amount > 50:
+        amount = 50
     payload = {}
     if jad_id:
         if "jad_occurrence__" in jad_id:
