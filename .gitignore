@@ -20,3 +20,5 @@ archiv/ollama_client.py
 play_openai.py
 llama-*/
 llama.tar.gz
+.secret
+django_graph_db_dump.custom

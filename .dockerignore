@@ -31,3 +31,5 @@ venv/
 *.ipynb
 *.sql
 *.zip
+.secret
+django_graph_db_dump.custom

@@ -185,16 +185,19 @@ def find_similar_passages(request):
                     collection_title=collection_title,
                     amount=amount,
                 ):
-                    if y.distance < max_distance and y.text_id != x.text_id:
-                        item["similar"].append(
-                            {
-                                "id": y.text_id,
-                                "distance": y.distance,
-                                "text": y.content,
-                                "passage_id": y.text_id.split("-")[0],
-                            }
-                        )
-                        similar_passages.add(y.text_id.split("-")[0])
+                    try:
+                        if y.distance < max_distance and y.text_id != x.text_id:
+                            item["similar"].append(
+                                {
+                                    "id": y.text_id,
+                                    "distance": y.distance,
+                                    "text": y.content,
+                                    "passage_id": y.text_id.split("-")[0],
+                                }
+                            )
+                            similar_passages.add(y.text_id.split("-")[0])
+                    except TypeError:
+                        continue
                 sents.append(item)
             payload["similar_passages"] = list(similar_passages)
             payload["similar"] = sents
