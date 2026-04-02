@@ -99,6 +99,7 @@ WSGI_APPLICATION = "django_graph_db.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": os.environ.get("DB_ENGINE", "django.db.backends.postgresql_psycopg2"),
+        "OPTIONS": {"options": "-c search_path=public,django_graph_db"},
         "NAME": os.environ.get("POSTGRES_DB", "django_graph_db"),
         "USER": os.environ.get("POSTGRES_USER", "postgres"),
         "PASSWORD": os.environ.get("POSTGRES_PASSWORD", "postgres"),
